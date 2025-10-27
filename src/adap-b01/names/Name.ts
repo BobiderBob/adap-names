@@ -49,8 +49,16 @@ export class Name {
      * The special characters in the data string are the default characters
      * @methodtype conversion-method
      */
-    public asDataString(): string {
-        return this.components.join(DEFAULT_DELIMITER);
+        public asDataString(): string {
+        // Escape special characters in each component for machine-readable output
+        const escapedComponents = this.components.map(component => {
+            // First escape the escape character itself (\ becomes \\)
+            let escaped = component.replace(new RegExp(`\\${ESCAPE_CHARACTER}`, 'g'), ESCAPE_CHARACTER + ESCAPE_CHARACTER);
+            // Then escape the default delimiter (. becomes \.)
+            escaped = escaped.replace(new RegExp(`\\${DEFAULT_DELIMITER}`, 'g'), ESCAPE_CHARACTER + DEFAULT_DELIMITER);
+            return escaped;
+        });
+        return escapedComponents.join(DEFAULT_DELIMITER);
     }
 
     /** @methodtype get-method */
