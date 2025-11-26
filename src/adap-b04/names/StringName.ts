@@ -70,7 +70,7 @@ export class StringName extends AbstractName {
      */
     private calculateNoComponents(): number {
         if (this.name === "") {
-            return 0;
+            return 1; // Empty string is one empty component
         }
         
         let count = 1;
@@ -95,7 +95,7 @@ export class StringName extends AbstractName {
      */
     private splitComponents(): string[] {
         if (this.name === "") {
-            return [];
+            return [""]; // Empty string is one empty component
         }
 
         const components: string[] = [];
@@ -141,6 +141,17 @@ export class StringName extends AbstractName {
         return cloned;
     }
 
+    public asDataString(): string {
+        // For StringName, return the internal representation directly
+        // which already has proper escaping
+        const result = this.name;
+        
+        // Postcondition: result is not null
+        MethodFailedException.assert(result !== null && result !== undefined, "asDataString result must not be null");
+        
+        return result;
+    }
+
     /** 
      * Returns number of components in Name instance 
      * @methodtype get-method
@@ -159,7 +170,15 @@ export class StringName extends AbstractName {
         IllegalArgumentException.assert(i < this.noComponents, "index must be less than number of components");
         
         const components = this.splitComponents();
-        const result = components[i];
+        let result = components[i];
+        
+        // If using a non-default delimiter, unescape any escaped DEFAULT_DELIMITER characters
+        // because they were escaped only for internal storage
+        if (this.delimiter !== DEFAULT_DELIMITER) {
+            // Simple replacement: \. -> .
+            const escaped = ESCAPE_CHARACTER + DEFAULT_DELIMITER;
+            result = result.split(escaped).join(DEFAULT_DELIMITER);
+        }
         
         // Postcondition: result must not be null
         MethodFailedException.assert(result !== null && result !== undefined, "component must not be null");
@@ -221,7 +240,9 @@ export class StringName extends AbstractName {
         IllegalArgumentException.assert(c !== null && c !== undefined, "component must not be null or undefined");
         
         const oldLength = this.noComponents;
-        if (this.name === "") {
+        // Always add delimiter when appending (even if name is empty string representing one empty component)
+        if (this.noComponents === 0) {
+            // This should not happen anymore since empty string is 1 component
             this.name = c;
         } else {
             this.name += DEFAULT_DELIMITER + c;
@@ -242,7 +263,7 @@ export class StringName extends AbstractName {
         // Preconditions
         IllegalArgumentException.assert(i >= 0, "index must be non-negative");
         IllegalArgumentException.assert(i < this.noComponents, "index must be less than number of components");
-        IllegalArgumentException.assert(this.noComponents > 0, "cannot remove from empty name");
+        IllegalArgumentException.assert(this.noComponents > 1, "cannot remove last component");
         
         const oldLength = this.noComponents;
         const components = this.splitComponents();

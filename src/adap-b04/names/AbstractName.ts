@@ -105,6 +105,8 @@ export abstract class AbstractName implements Name {
     public concat(other: Name): void {
         // Precondition: other must not be null
         IllegalArgumentException.assert(other !== undefined && other !== null, "other must not be null or undefined");
+        // Precondition: delimiters must match
+        IllegalArgumentException.assert(this.delimiter === other.getDelimiterCharacter(), "delimiters must match for concat");
         
         const oldLength = this.getNoComponents();
         

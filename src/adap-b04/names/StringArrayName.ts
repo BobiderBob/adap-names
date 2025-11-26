@@ -15,6 +15,7 @@ export class StringArrayName extends AbstractName {
     constructor(source: string[], delimiter?: string) {
         // Precondition: source must not be null or undefined
         IllegalArgumentException.assert(source !== undefined && source !== null, "source must not be null or undefined");
+        IllegalArgumentException.assert(source.length > 0, "source array must not be empty");
         
         super(delimiter);
         this.components = [...source]; // Create a copy to avoid external modifications
@@ -31,6 +32,29 @@ export class StringArrayName extends AbstractName {
         MethodFailedException.assert(this.isEqual(cloned as Name), "clone must create an equal object");
         
         return cloned;
+    }
+
+    public asDataString(): string {
+        // For StringArrayName, if using non-default delimiter, need to escape DEFAULT_DELIMITER in components
+        if (this.delimiter !== DEFAULT_DELIMITER) {
+            const escapedComponents = this.components.map(c => {
+                // Escape any unescaped DEFAULT_DELIMITER characters
+                let result = "";
+                for (let i = 0; i < c.length; i++) {
+                    if (c[i] === ESCAPE_CHARACTER && i + 1 < c.length) {
+                        result += c[i] + c[i + 1];
+                        i++;
+                    } else if (c[i] === DEFAULT_DELIMITER) {
+                        result += ESCAPE_CHARACTER + c[i];
+                    } else {
+                        result += c[i];
+                    }
+                }
+                return result;
+            });
+            return escapedComponents.join(DEFAULT_DELIMITER);
+        }
+        return this.components.join(DEFAULT_DELIMITER);
     }
 
     /** 
@@ -123,7 +147,7 @@ export class StringArrayName extends AbstractName {
         // Preconditions
         IllegalArgumentException.assert(i >= 0, "index must be non-negative");
         IllegalArgumentException.assert(i < this.components.length, "index must be less than number of components");
-        IllegalArgumentException.assert(this.components.length > 0, "cannot remove from empty name");
+        IllegalArgumentException.assert(this.components.length > 1, "cannot remove last component");
         
         const oldLength = this.components.length;
         this.components.splice(i, 1);
